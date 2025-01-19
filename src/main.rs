@@ -56,7 +56,7 @@ impl Blockchain {
 
     pub fn add_block(&mut self, data: &str){
         let previous_block = self.blocks.last().unwrap();
-        let chain_len:  = self.blocks.len() as u64;
+        let chain_len = self.blocks.len() as u64;
         let new_block = Block::new(chain_len, data, &previous_block.hash);
         self.blocks.push(new_block);
     }
