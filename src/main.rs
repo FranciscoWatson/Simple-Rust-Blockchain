@@ -11,6 +11,11 @@ fn main() {
         println!("{:?}", block)
     }
 
+    if blockchain.is_chain_valid() {
+        println!("Chain is valid.");
+    } else {
+        println!("Chain is invalid.");
+    }
 }
 
 #[derive(Debug)]
@@ -59,5 +64,23 @@ impl Blockchain {
         let chain_len = self.blocks.len() as u64;
         let new_block = Block::new(chain_len, data, &previous_block.hash);
         self.blocks.push(new_block);
+    }
+
+    pub fn is_chain_valid(&self) -> bool {
+        for i in 1..self.blocks.len() {          
+            let current_block = &self.blocks[i];
+            let previous_block = &self.blocks[i - 1];
+            
+            if current_block.hash != Block::calculate_hash(current_block.index, current_block.timestamp, &current_block.data, &current_block.previous_hash) {
+                println!("Invalid hash in block {}", current_block.index);
+                return false;
+            }
+
+            if current_block.previous_hash != previous_block.hash {
+                println!("Previous hash isn't equal {}", current_block.index);
+                return false;
+            }
+        }
+        true
     }
 }
