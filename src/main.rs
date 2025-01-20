@@ -3,11 +3,13 @@ use sha2::{Digest, Sha256};
 
 
 fn main() {
-    let genesis_block = Block::new(0, "Genesis Block", "0");
-    println!("Genesis Block: {:?}", genesis_block);
+    let mut blockchain = Blockchain::new();
 
-    let block1 = Block::new(1, "Transaction Data", &genesis_block.hash);
-    println!("Block 1: {:?}", block1);
+    blockchain.add_block("Transaction Data");
+
+    for block in &blockchain.blocks {
+        println!("{:?}", block)
+    }
 
 }
 
@@ -37,5 +39,25 @@ impl Block {
         let mut hasher = Sha256::new();
         hasher.update(input);
         format!("{:x}", hasher.finalize()) // Return the hash as a hex string
+    }
+}
+
+struct Blockchain {
+    blocks: Vec<Block>,
+}
+
+impl Blockchain {
+    pub fn new() -> Self {
+        let genesis_block = Block::new(0, "Genesis Block", "0");
+        Self {
+            blocks: vec![genesis_block],
+        }
+    }
+
+    pub fn add_block(&mut self, data: &str){
+        let previous_block = self.blocks.last().unwrap();
+        let chain_len:  = self.blocks.len() as u64;
+        let new_block = Block::new(chain_len, data, &previous_block.hash);
+        self.blocks.push(new_block);
     }
 }
