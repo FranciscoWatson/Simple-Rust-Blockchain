@@ -21,9 +21,7 @@ fn main() {
     
     blockchain.add_block(vec![tx1, tx2]);
 
-    for block in &blockchain.chain {
-        println!("{:?}", block)
-    }
+    println!("{}", blockchain);
 
     // TO-DO, read blockchain from a file.
     audit_blockchain(&blockchain);

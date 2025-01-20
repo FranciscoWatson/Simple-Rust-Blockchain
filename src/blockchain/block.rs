@@ -1,5 +1,7 @@
 use chrono::prelude::*;
 use sha2::{Digest, Sha256};
+use std::fmt;
+
 
 use crate::transactions::Transaction;
 
@@ -33,5 +35,23 @@ impl Block {
         let mut hasher = Sha256::new();
         hasher.update(input);
         format!("{:x}", hasher.finalize()) // Return the hash as a hex string
+    }
+}
+
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Block {}\nTimestamp: {}\nPrevious Hash: {}\nHash: {}\nTransactions:\n{}",
+            self.index,
+            self.timestamp,
+            self.previous_hash,
+            self.hash,
+            self.transactions
+                .iter()
+                .map(|tx| format!("{}", tx))
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
     }
 }

@@ -1,5 +1,6 @@
 use super::block::Block;
 use crate::transactions::Transaction;
+use std::fmt;
 
 pub struct Blockchain {
     pub chain: Vec<Block>,
@@ -36,5 +37,19 @@ impl Blockchain {
             }
         }
         true
+    }
+}
+
+impl fmt::Display for Blockchain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.chain
+                .iter()
+                .map(|block| format!("{}", block))
+                .collect::<Vec<String>>()
+                .join("\n\n")
+        )
     }
 }
