@@ -18,20 +18,23 @@ impl Blockchain {
     }
 
     pub fn add_block(&mut self, transactions: Vec<Transaction>){
+
+        if !self.validate_transactions(&transactions) {
+            println!("Block rejected due to invalid transactions.");
+            return;
+        }
+        
         for transaction in &transactions {
-            let sender_balance = self.balances.get(&transaction.sender);
-            if sender_balance.is_none() || sender_balance.unwrap() < &transaction.amount {
-                println!("Insufficient funds for transaction from '{}' to '{}'.", transaction.sender, transaction.receiver);
-                return;
+            let sender_balance = self.balances.get(&transaction.sender).copied().unwrap_or(0);
+            if sender_balance < transaction.amount {
+            println!("Insufficient funds for transaction from '{}' to '{}'.", transaction.sender, transaction.receiver);
+            return;
             }
 
-            let receiver_balance = self.balances.get(&transaction.receiver);
-            let new_sender_balance = sender_balance.unwrap() - &transaction.amount;
-            let new_receiver_balance = receiver_balance.unwrap_or(&0) + &transaction.amount;
+            let receiver_balance = self.balances.get(&transaction.receiver).copied().unwrap_or(0);
 
-            self.balances.insert(transaction.sender.clone(), new_sender_balance);
-
-            self.balances.insert(transaction.receiver.clone(), new_receiver_balance);
+            self.balances.insert(transaction.sender.clone(), sender_balance - transaction.amount);
+            self.balances.insert(transaction.receiver.clone(), receiver_balance + transaction.amount);
         }
 
         let previous_block = self.chain.last().unwrap();
@@ -66,6 +69,17 @@ impl Blockchain {
         self.balances.insert(account_name.to_string(), initial_balance);
         println!("Account '{}' succesfully created with a balance of '{}'.", account_name, initial_balance);
         return  true;
+    }
+
+    fn validate_transactions(&self, transactions: &Vec<Transaction>) -> bool {
+        for transaction in transactions {
+            let sender_balance = self.balances.get(&transaction.sender).copied().unwrap_or(0);
+            if sender_balance < transaction.amount {
+                println!("Insufficient funds for transaction from '{}' to '{}'.", transaction.sender, transaction.receiver);
+                return false;
+            }
+        }
+        true
     }
 }
 
