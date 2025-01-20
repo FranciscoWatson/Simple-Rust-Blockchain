@@ -11,6 +11,11 @@ fn main() {
         println!("{:?}", block)
     }
 
+    // TO-DO, read blockchain from a file.
+    audit_blockchain(&blockchain);
+}
+
+fn audit_blockchain(blockchain: &Blockchain) {
     if blockchain.is_chain_valid() {
         println!("Chain is valid.");
     } else {
