@@ -11,6 +11,8 @@ fn main() {
     blockchain.create_account("Alice", 100);
     blockchain.create_account("Bob", 100);
 
+    blockchain.add_validator("Alice", 1);
+
     let tx1 = Transaction {
         sender: "Alice".to_string(),
         receiver: "Bob".to_string(),

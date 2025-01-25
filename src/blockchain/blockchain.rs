@@ -1,10 +1,13 @@
 use super::block::Block;
 use crate::transactions::Transaction;
 use std::{collections::HashMap, fmt};
+use rand::Rng;
+
 
 pub struct Blockchain {
     pub chain: Vec<Block>,
-    pub balances: HashMap<String, u64>
+    pub balances: HashMap<String, u64>,
+    pub validators: HashMap<String, u64>,
 }
 
 impl Blockchain {
@@ -14,6 +17,7 @@ impl Blockchain {
         Self {
             chain: vec![genesis_block],
             balances: HashMap::new(),
+            validators: HashMap::new(),
         }
     }
 
@@ -23,6 +27,14 @@ impl Blockchain {
             println!("Block rejected due to invalid transactions.");
             return;
         }
+
+        let validator = match self.select_validator() {
+            Some(v) => v,
+            None => {
+                println!("No valid validator found.");
+                return;
+            }
+        };
         
         for transaction in &transactions {
             let sender_balance = self.balances.get(&transaction.sender).copied().unwrap_or(0);
@@ -36,6 +48,9 @@ impl Blockchain {
             self.balances.insert(transaction.sender.clone(), sender_balance - transaction.amount);
             self.balances.insert(transaction.receiver.clone(), receiver_balance + transaction.amount);
         }
+
+        let reward = 100;
+        *self.balances.entry(validator.clone()).or_insert(0) += reward;
 
         let new_block = BlockFactory::create_block(&self.chain, transactions);
 
@@ -79,6 +94,42 @@ impl Blockchain {
             }
         }
         true
+    }
+
+    pub fn add_validator(&mut self, validator_name: &str, stake: u64) -> bool {
+        if let Some(balance) = self.balances.get_mut(validator_name) {
+            if *balance >= stake {
+                *balance -= stake;
+                self.validators.insert(validator_name.to_string(), stake);
+                println!("Validator '{}' added with stake {}", validator_name, stake);
+                return true;
+            } else {
+                println!("Insufficient balance for staking.");
+            }
+        } else {
+            println!("Account '{}' does not exist.", validator_name);
+        }
+        false
+    }
+
+    pub fn select_validator(&self) -> Option<String> {
+        if self.validators.is_empty() {
+            println!("No validators available.");
+            return None;
+        }
+
+        let total_stake: u64 = self.validators.values().sum();
+        let mut rng = rand::thread_rng();
+        let mut selected_value = rng.gen_range(0..total_stake);
+
+        for (account, stake) in &self.validators {
+            if selected_value < *stake {
+                return Some(account.clone());
+            }
+            selected_value -= stake;
+        }
+
+        None
     }
 }
 
@@ -139,6 +190,9 @@ mod tests{
 
         blockchain.create_account("Alice", 100);
         blockchain.create_account("Bob", 100);
+        blockchain.create_account("Charlie", 100);
+
+        blockchain.add_validator("Charlie", 20);
 
         let tx = Transaction {
             sender: "Alice".to_string(),
@@ -150,6 +204,7 @@ mod tests{
 
         assert_eq!(blockchain.balances.get("Alice").unwrap(), &50);
         assert_eq!(blockchain.balances.get("Bob").unwrap(), &150);
+        assert_eq!(blockchain.balances.get("Charlie").unwrap(), &180);
     }
 
     #[test]
@@ -158,6 +213,10 @@ mod tests{
 
         blockchain.create_account("Alice", 100);
         blockchain.create_account("Bob", 100);
+        blockchain.create_account("Charlie", 100);
+
+        blockchain.add_validator("Charlie", 20);
+
 
         let tx = Transaction {
             sender: "Alice".to_string(),
@@ -169,6 +228,7 @@ mod tests{
 
         assert_eq!(blockchain.balances.get("Alice").unwrap(), &100);
         assert_eq!(blockchain.balances.get("Bob").unwrap(), &100);
+        assert_eq!(blockchain.balances.get("Charlie").unwrap(), &80);
     }
 
     #[test]
@@ -177,6 +237,9 @@ mod tests{
 
         blockchain.create_account("Alice", 100);
         blockchain.create_account("Bob", 100);
+        blockchain.create_account("Charlie", 100);
+
+        blockchain.add_validator("Charlie", 20);
 
         let tx1 = Transaction {
             sender: "Alice".to_string(),
