@@ -37,9 +37,8 @@ impl Blockchain {
             self.balances.insert(transaction.receiver.clone(), receiver_balance + transaction.amount);
         }
 
-        let previous_block = self.chain.last().unwrap();
-        let chain_len = self.chain.len() as u64;
-        let new_block = Block::new(chain_len, transactions, &previous_block.hash);
+        let new_block = BlockFactory::create_block(&self.chain, transactions);
+
         self.chain.push(new_block);
     }
 
@@ -94,5 +93,16 @@ impl fmt::Display for Blockchain {
                 .collect::<Vec<String>>()
                 .join("\n\n")
         )
+    }
+}
+
+pub struct BlockFactory;
+
+impl BlockFactory{
+    pub fn create_block(chain: &Vec<Block>, transactions: Vec<Transaction>) -> Block {
+        let previous_block = chain.last().unwrap();
+        let chain_len = chain.len() as u64;
+        let new_block = Block::new(chain_len, transactions, &previous_block.hash);
+        new_block
     }
 }
