@@ -106,3 +106,102 @@ impl BlockFactory{
         new_block
     }
 }
+
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    
+    use crate::{blockchain, transactions::Transaction};
+
+    #[test]
+    fn test_create_account(){
+        let mut blockchain = Blockchain::new();
+
+        blockchain.create_account("Alice", 100);
+
+        assert_eq!(blockchain.balances.get("Alice").unwrap(), &100);
+    }
+
+    #[test]
+    fn test_create_account_already_exists(){
+        let mut blockchain = Blockchain::new();
+
+        blockchain.create_account("Alice", 100);
+        blockchain.create_account("Alice", 1001);
+
+        assert_eq!(blockchain.balances.get("Alice").unwrap(), &100);
+    }
+
+    #[test]
+    fn test_add_block(){
+        let mut blockchain = Blockchain::new();
+
+        blockchain.create_account("Alice", 100);
+        blockchain.create_account("Bob", 100);
+
+        let tx = Transaction {
+            sender: "Alice".to_string(),
+            receiver: "Bob".to_string(),
+            amount: 50,
+        };
+
+        blockchain.add_block(vec![tx]);
+
+        assert_eq!(blockchain.balances.get("Alice").unwrap(), &50);
+        assert_eq!(blockchain.balances.get("Bob").unwrap(), &150);
+    }
+
+    #[test]
+    fn test_add_block_insufficient_funds(){
+        let mut blockchain = Blockchain::new();
+
+        blockchain.create_account("Alice", 100);
+        blockchain.create_account("Bob", 100);
+
+        let tx = Transaction {
+            sender: "Alice".to_string(),
+            receiver: "Bob".to_string(),
+            amount: 150,
+        };
+
+        blockchain.add_block(vec![tx]);
+
+        assert_eq!(blockchain.balances.get("Alice").unwrap(), &100);
+        assert_eq!(blockchain.balances.get("Bob").unwrap(), &100);
+    }
+
+    #[test]
+    fn test_is_chain_valid(){
+        let mut blockchain = Blockchain::new();
+
+        blockchain.create_account("Alice", 100);
+        blockchain.create_account("Bob", 100);
+
+        let tx1 = Transaction {
+            sender: "Alice".to_string(),
+            receiver: "Bob".to_string(),
+            amount: 50,
+        };
+        let tx2 = Transaction {
+            sender: "Bob".to_string(),
+            receiver: "Alice".to_string(),
+            amount: 5,
+        };
+        let tx3 = Transaction {
+            sender: "Alice".to_string(),
+            receiver: "Bob".to_string(),
+            amount: 20,
+        };
+        let tx4 = Transaction {
+            sender: "Bob".to_string(),
+            receiver: "Alice".to_string(),
+            amount: 5,
+        };
+
+        blockchain.add_block(vec![tx1, tx2]);
+        blockchain.add_block(vec![tx3, tx4]);
+
+        assert_eq!(blockchain.is_chain_valid(), true);
+    }
+}
